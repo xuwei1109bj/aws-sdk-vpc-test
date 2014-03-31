@@ -48,6 +48,22 @@ public class AWSVPCClient {
 	private AWSCredentials awsCredentials;
 	private AmazonEC2Client amazonEC2Client;
 	
+	/**
+	 * Creates a VPC with the specified CIDR block.
+	 * 
+	 * The smallest VPC you can create uses a /28 netmask (16 IP addresses), and
+	 * the largest uses a /16 netmask (65,536 IP addresses). To help you decide
+	 * how big to make your VPC, see Your VPC and Subnets in the Amazon Virtual
+	 * Private Cloud User Guide .
+	 * 
+	 * By default, each instance you launch in the VPC has the default DHCP
+	 * options, which includes only a default DNS server that Amazon provide
+	 * (AmazonProvidedDNS).
+	 * 
+	 * @param cidrBlock
+	 * @param instanceTenancy
+	 * @return
+	 */
 	public Vpc createVPC(String cidrBlock, String instanceTenancy) {
 		CreateVpcRequest createVpcRequest = new CreateVpcRequest();
 		createVpcRequest.setCidrBlock(cidrBlock);
@@ -55,6 +71,16 @@ public class AWSVPCClient {
 		return amazonEC2Client.createVpc(createVpcRequest).getVpc();
 	}
 	
+	/**
+	 * Deletes the specified VPC. You must detach or delete all gateways and
+	 * resources that are associated with the VPC before you can delete it. For
+	 * example, you must terminate all instances running in the VPC, delete all
+	 * security groups associated with the VPC (except the default one), delete
+	 * all route tables associated with the VPC (except the default one), and so
+	 * on.
+	 * 
+	 * @param vpcId
+	 */
 	public void deleteVPC(String vpcId) {
 		DeleteVpcRequest deleteVpcRequest = new DeleteVpcRequest(vpcId);
 		amazonEC2Client.deleteVpc(deleteVpcRequest);
@@ -65,7 +91,12 @@ public class AWSVPCClient {
 //	}
 	
 	/**
-	 * @param resouceId	such as vpcId, subnetId ...
+	 * Adds or overwrites one or more tags for the specified EC2 resource or
+	 * resources. Each resource can have a maximum of 10 tags. Each tag consists
+	 * of a key and optional value. Tag keys must be unique per resource.
+	 * 
+	 * @param resouceId
+	 *            such as vpcId, subnetId ...
 	 * @param tags
 	 */
 	public void addTags(String resouceId, List<Tag> tags) {
@@ -88,6 +119,12 @@ public class AWSVPCClient {
 		amazonEC2Client.deleteTags(deleteTagsRequest);
 	}
 	
+	/**
+	 * Get vpc.
+	 * 
+	 * @param vpcId
+	 * @return
+	 */
 	public Vpc getVPC(String vpcId) {
 		if(isValidString(vpcId)) {
 			List<String> vpcIds = new ArrayList<String>();
@@ -100,21 +137,60 @@ public class AWSVPCClient {
 		return null;
 	}
 	
+	/**
+	 * Get vpcs.
+	 * 
+	 * @param vpcIds
+	 * @return
+	 */
 	public List<Vpc> getVPCs(Collection<String> vpcIds) {
 		DescribeVpcsRequest describeVpcsRequest = new DescribeVpcsRequest();
 		describeVpcsRequest.setVpcIds(vpcIds);
 		return amazonEC2Client.describeVpcs(describeVpcsRequest).getVpcs();
 	}
 	
+	/**
+	 * Get vpcs.
+	 * 
+	 * @return
+	 */
 	public List<Vpc> getVPCs() {
 		return amazonEC2Client.describeVpcs().getVpcs();
 	}
 	
+	/**
+	 * Creates a subnet in an existing VPC.
+	 * 
+	 * When you create each subnet, you provide the VPC ID and the CIDR block
+	 * you want for the subnet. After you create a subnet, you can't change its
+	 * CIDR block. The subnet's CIDR block can be the same as the VPC's CIDR
+	 * block (assuming you want only a single subnet in the VPC), or a subset of
+	 * the VPC's CIDR block. If you create more than one subnet in a VPC, the
+	 * subnets' CIDR blocks must not overlap. The smallest subnet (and VPC) you
+	 * can create uses a /28 netmask (16 IP addresses), and the largest uses a
+	 * /16 netmask (65,536 IP addresses).
+	 * 
+	 * IMPORTANT: AWS reserves both the first four and the last IP address in
+	 * each subnet's CIDR block. They're not available for use.
+	 * 
+	 * If you add more than one subnet to a VPC, they're set up in a star
+	 * topology with a logical router in the middle.
+	 * 
+	 * @param vpcId
+	 * @param cidrBlock
+	 * @return
+	 */
 	public Subnet createSubnet(String vpcId, String cidrBlock) {
 		CreateSubnetRequest createSubnetRequest = new CreateSubnetRequest(vpcId, cidrBlock);
 		return amazonEC2Client.createSubnet(createSubnetRequest).getSubnet();
 	}
 	
+	/**
+	 * Get subnet.
+	 * 
+	 * @param subnetId
+	 * @return
+	 */
 	public Subnet getSubnet(String subnetId) {
 		if(isValidString(subnetId)) {
 			DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest();
@@ -129,33 +205,70 @@ public class AWSVPCClient {
 		return null;
 	}
 	
+	/**
+	 * Get subnets.
+	 * 
+	 * @return
+	 */
 	public List<Subnet> getSubnets() {
 		return amazonEC2Client.describeSubnets().getSubnets();
 	}
 	
+	/**
+	 * Get subnets.
+	 * 
+	 * @param subnetIds
+	 * @return
+	 */
 	public List<Subnet> getSubnets(Collection<String> subnetIds) {
 		DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest();
 		describeSubnetsRequest.setSubnetIds(subnetIds);
 		return amazonEC2Client.describeSubnets(describeSubnetsRequest).getSubnets();
 	}
 	
+	/**
+	 * Deletes the specified subnet. You must terminate all running instances in
+	 * the subnet before you can delete the subnet.
+	 * 
+	 * @param subnetId
+	 */
 	public void deleteSubnet(String subnetId) {
 		DeleteSubnetRequest deleteSubnetRequest = new DeleteSubnetRequest(subnetId);
 		amazonEC2Client.deleteSubnet(deleteSubnetRequest);
 	}
 	
+	/**
+	 * Creates a route table for the specified VPC. After you create a route
+	 * table, you can add routes and associate the table with a subnet.
+	 * 
+	 * @param vpcId
+	 * @return
+	 */
 	public RouteTable createRouteTable(String vpcId) {
 		CreateRouteTableRequest createRouteTableRequest = new CreateRouteTableRequest();
 		createRouteTableRequest.setVpcId(vpcId);
 		return amazonEC2Client.createRouteTable(createRouteTableRequest).getRouteTable();
 	}
 	
+	/**
+	 * Deletes the specified route table. You must disassociate the route table
+	 * from any subnets before you can delete it. You can't delete the main
+	 * route table.
+	 * 
+	 * @param routeTableId
+	 */
 	public void deleteRouteTable(String routeTableId) {
 		DeleteRouteTableRequest deleteRouteTableRequest = new DeleteRouteTableRequest();
 		deleteRouteTableRequest.setRouteTableId(routeTableId);
 		amazonEC2Client.deleteRouteTable(deleteRouteTableRequest);
 	}
 	
+	/**
+	 * Get the specified routeTable.
+	 * 
+	 * @param routeTableId
+	 * @return
+	 */
 	public RouteTable getRouteTable(String routeTableId) {
 		if(isValidString(routeTableId)) {
 			DescribeRouteTablesRequest describeRouteTablesRequest = new DescribeRouteTablesRequest();
@@ -171,16 +284,38 @@ public class AWSVPCClient {
 		return null;
 	}
 	
+	/**
+	 * Get the specified routeTables.
+	 * 
+	 * @param routeTableIds
+	 * @return
+	 */
 	public List<RouteTable> getRouteTables(Collection<String> routeTableIds) {
 		DescribeRouteTablesRequest describeRouteTablesRequest = new DescribeRouteTablesRequest();
 		describeRouteTablesRequest.setRouteTableIds(routeTableIds);
 		return amazonEC2Client.describeRouteTables(describeRouteTablesRequest).getRouteTables();
 	}
 	
+	/**
+	 * Get routeTables.
+	 * 
+	 * @return
+	 */
 	public List<RouteTable> getRouteTables() {
 		return amazonEC2Client.describeRouteTables().getRouteTables();
 	}
 	
+	/**
+	 * Associates a subnet with a route table. The subnet and route table must
+	 * be in the same VPC. This association causes traffic originating from the
+	 * subnet to be routed according to the routes in the route table. The
+	 * action returns an association ID, which you need in order to disassociate
+	 * the route table from the subnet later. A route table can be associated
+	 * with multiple subnets.
+	 * 
+	 * @param routeTableId
+	 * @param subnetId
+	 */
 	public void associateRouteTable(String routeTableId, String subnetId) {
 		AssociateRouteTableRequest associateRouteTableRequest = new AssociateRouteTableRequest();
 		associateRouteTableRequest.setRouteTableId(routeTableId);
@@ -189,12 +324,16 @@ public class AWSVPCClient {
 	}
 	
 	/**
-	 * The request must contain exactly one of gatewayId, networkInterfaceId or instanceId
+	 * The request must contain exactly one of gatewayId, networkInterfaceId or
+	 * instanceId
 	 * 
 	 * @param destinationCidrBlock
-	 * @param gatewayId	expecting "igw-..."
+	 * @param gatewayId
+	 *            expecting "igw-..."
 	 * @param instanceId
-	 * @param networkInterfaceId	expecting "eni-..."
+	 *            expecting "i-..."
+	 * @param networkInterfaceId
+	 *            expecting "eni-..."
 	 * @param routeTableId
 	 */
 	public void createRoute(String destinationCidrBlock, String gatewayId, String instanceId, String networkInterfaceId, String routeTableId) {
@@ -213,6 +352,12 @@ public class AWSVPCClient {
 		amazonEC2Client.createRoute(createRouteRequest);
 	}
 	
+	/**
+	 * Delete the specified route.
+	 * 
+	 * @param routeTableId
+	 * @param destinationCidrBlock
+	 */
 	public void deleteRoute(String routeTableId, String destinationCidrBlock) {
 		DeleteRouteRequest deleteRouteRequest = new DeleteRouteRequest();
 		deleteRouteRequest.setDestinationCidrBlock(destinationCidrBlock);
@@ -220,10 +365,22 @@ public class AWSVPCClient {
 		amazonEC2Client.deleteRoute(deleteRouteRequest);
 	}
 	
+	/**
+	 * Creates an Internet gateway for use with a VPC. After creating the
+	 * Internet gateway, you attach it to a VPC using AttachInternetGateway.
+	 * 
+	 * @return
+	 */
 	public InternetGateway createInternetGateway() {
 		return amazonEC2Client.createInternetGateway().getInternetGateway();
 	}
 	
+	/**
+	 * Get the specified internetGateway.
+	 * 
+	 * @param internetGatewayId
+	 * @return
+	 */
 	public InternetGateway getInternetGateway(String internetGatewayId) {
 		if(isValidString(internetGatewayId)) {
 			DescribeInternetGatewaysRequest describeInternetGatewaysRequest = new DescribeInternetGatewaysRequest();
@@ -238,16 +395,34 @@ public class AWSVPCClient {
 		return null;
 	}
 	
+	/**
+	 * Get internetGateways.
+	 * 
+	 * @return
+	 */
 	public List<InternetGateway> getInternetGateways() {
 		return amazonEC2Client.describeInternetGateways().getInternetGateways();
 	}
 	
+	/**
+	 * Get the specified internetGateways.
+	 * 
+	 * @param internetGatewayIds
+	 * @return
+	 */
 	public List<InternetGateway> getInternetGateways(Collection<String> internetGatewayIds) {
 		DescribeInternetGatewaysRequest describeInternetGatewaysRequest = new DescribeInternetGatewaysRequest();
 		describeInternetGatewaysRequest.setInternetGatewayIds(internetGatewayIds);
 		return amazonEC2Client.describeInternetGateways(describeInternetGatewaysRequest).getInternetGateways();
 	}
 	
+	/**
+	 * Attaches an Internet gateway to a VPC, enabling connectivity between the
+	 * Internet and the VPC.
+	 * 
+	 * @param vpcId
+	 * @param internetGatewayId
+	 */
 	public void attachInternetGateway(String vpcId, String internetGatewayId) {
 		AttachInternetGatewayRequest attachInternetGatewayRequest = new AttachInternetGatewayRequest();
 		attachInternetGatewayRequest.setInternetGatewayId(internetGatewayId);
@@ -255,6 +430,14 @@ public class AWSVPCClient {
 		amazonEC2Client.attachInternetGateway(attachInternetGatewayRequest);
 	}
 	
+	/**
+	 * Detaches an Internet gateway from a VPC, disabling connectivity between
+	 * the Internet and the VPC. The VPC must not contain any running instances
+	 * with Elastic IP addresses.
+	 * 
+	 * @param internetGatewayId
+	 * @param vpcId
+	 */
 	public void detachInternetGateway(String internetGatewayId, String vpcId) {
 		DetachInternetGatewayRequest detachInternetGatewayRequest = new DetachInternetGatewayRequest();
 		detachInternetGatewayRequest.setInternetGatewayId(internetGatewayId);
@@ -262,6 +445,12 @@ public class AWSVPCClient {
 		amazonEC2Client.detachInternetGateway(detachInternetGatewayRequest);
 	}
 	
+	/**
+	 * Deletes the specified Internet gateway. You must detach the Internet
+	 * gateway from the VPC before you can delete it.
+	 * 
+	 * @param internetGatewayId
+	 */
 	public void deleteInternetGateway(String internetGatewayId) {
 		DeleteInternetGatewayRequest deleteInternetGatewayRequest = new DeleteInternetGatewayRequest();
 		deleteInternetGatewayRequest.setInternetGatewayId(internetGatewayId);
